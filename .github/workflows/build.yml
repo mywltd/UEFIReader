@@ -10,7 +10,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # 在 GitHub 将 Actions 默认切到 Node 24 前，避免 checkout/setup-dotnet 的 Node 20 弃用告警
     # https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
@@ -26,11 +25,56 @@ jobs:
       - name: Restore
         run: dotnet restore UEFIReader.sln
 
-      - name: Publish
-        run: dotnet publish UEFIReader/UEFIReader.csproj --no-restore -c Release -o publish
+      # 在 Linux 上按 RID 交叉发布（框架依赖，目标机需安装 .NET 8 运行时）
+      - name: Cross-publish (all runtimes)
+        run: |
+          set -euo pipefail
+          for rid in \
+            win-x64 win-arm64 \
+            linux-x64 linux-arm64 linux-musl-x64 \
+            osx-x64 osx-arm64; do
+            echo "=== Publishing: $rid ==="
+            dotnet publish UEFIReader/UEFIReader.csproj --no-restore -c Release -o "publish/${rid}" -r "$rid"
+          done
 
-      - name: Upload build artifact
+      - name: Upload UEFIReader-win-x64
         uses: actions/upload-artifact@v4
         with:
-          name: UEFIReader-net8.0
-          path: publish/
+          name: UEFIReader-win-x64
+          path: publish/win-x64/
+
+      - name: Upload UEFIReader-win-arm64
+        uses: actions/upload-artifact@v4
+        with:
+          name: UEFIReader-win-arm64
+          path: publish/win-arm64/
+
+      - name: Upload UEFIReader-linux-x64
+        uses: actions/upload-artifact@v4
+        with:
+          name: UEFIReader-linux-x64
+          path: publish/linux-x64/
+
+      - name: Upload UEFIReader-linux-arm64
+        uses: actions/upload-artifact@v4
+        with:
+          name: UEFIReader-linux-arm64
+          path: publish/linux-arm64/
+
+      - name: Upload UEFIReader-linux-musl-x64
+        uses: actions/upload-artifact@v4
+        with:
+          name: UEFIReader-linux-musl-x64
+          path: publish/linux-musl-x64/
+
+      - name: Upload UEFIReader-osx-x64
+        uses: actions/upload-artifact@v4
+        with:
+          name: UEFIReader-osx-x64
+          path: publish/osx-x64/
+
+      - name: Upload UEFIReader-osx-arm64
+        uses: actions/upload-artifact@v4
+        with:
+          name: UEFIReader-osx-arm64
+          path: publish/osx-arm64/
