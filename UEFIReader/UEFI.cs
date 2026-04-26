@@ -208,15 +208,15 @@ namespace UEFIReader
                                 break;
                         }
 
-                        // TODO: Handle when there's more than one PE32/RAW/etc
-                        string outputFileName = $"{moduleName}.{extension}";
+                        string outputFileName = AllocateUniqueOutputFileName(
+                            combinedPath,
+                            moduleName,
+                            extension,
+                            type,
+                            element.Guid);
 
                         infoutput += $"\r\n   {type}|{outputFileName}|*";
 
-                        if (File.Exists(Path.Combine(combinedPath, outputFileName)))
-                        {
-                            throw new Exception("File Conflict Detected");
-                        }
                         File.WriteAllBytes(Path.Combine(combinedPath, outputFileName), item.DecompressedImage);
                     }
 
@@ -782,6 +782,44 @@ namespace UEFIReader
 
             return Bytes;
         }*/
+
+        /// <summary>
+        /// 在目录中分配不与已有文件冲突的文件名。若期望名已存在，则依次尝试 module_2.ext、module_3.ext。
+        /// 重名时向 stderr 打印目录、模块名、节类型、GUID 与重命名结果，不抛异常。
+        /// </summary>
+        private static string AllocateUniqueOutputFileName(
+            string outputDirectory,
+            string moduleName,
+            string fileExtension,
+            string sectionType,
+            Guid fileGuid)
+        {
+            string preferred = $"{moduleName}.{fileExtension}";
+            string fullPath = Path.Combine(outputDirectory, preferred);
+            if (!File.Exists(fullPath))
+            {
+                return preferred;
+            }
+
+            for (int i = 2; ; i++)
+            {
+                string candidate = $"{moduleName}_{i}.{fileExtension}";
+                fullPath = Path.Combine(outputDirectory, candidate);
+                if (!File.Exists(fullPath))
+                {
+                    string guid = fileGuid.ToString().ToUpperInvariant();
+                    Console.Error.WriteLine("[UEFIReader] 输出文件与已有文件重名，已自动改用新文件名（继续导出）。");
+                    Console.Error.WriteLine($"  输出目录: {outputDirectory}");
+                    Console.Error.WriteLine($"  模块名: {moduleName}");
+                    Console.Error.WriteLine($"  FILE_GUID: {guid}");
+                    Console.Error.WriteLine($"  节类型: {sectionType}");
+                    Console.Error.WriteLine($"  被占用的名称: {preferred}");
+                    Console.Error.WriteLine($"  将写入: {candidate}");
+                    Console.Error.WriteLine();
+                    return candidate;
+                }
+            }
+        }
 
         private bool VerifyVolumeChecksum(byte[] Image, ulong Offset)
         {
