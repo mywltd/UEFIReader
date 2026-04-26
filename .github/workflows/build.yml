@@ -10,6 +10,10 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # 在 GitHub 将 Actions 默认切到 Node 24 前，避免 checkout/setup-dotnet 的 Node 20 弃用告警
+    # https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -22,5 +26,11 @@ jobs:
       - name: Restore
         run: dotnet restore UEFIReader.sln
 
-      - name: Build
-        run: dotnet build UEFIReader.sln --no-restore -c Release
+      - name: Publish
+        run: dotnet publish UEFIReader/UEFIReader.csproj --no-restore -c Release -o publish
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: UEFIReader-net8.0
+          path: publish/

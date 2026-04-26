@@ -103,6 +103,7 @@ namespace SevenZip.Compression.RangeCoder
                 Prob += (kBitModelTotal - Prob) >> kNumMoveBits;
                 if (rangeDecoder.Range < Decoder.kTopValue)
                 {
+                    ArgumentNullException.ThrowIfNull(rangeDecoder.Stream);
                     rangeDecoder.Code = (rangeDecoder.Code << 8) | (byte)rangeDecoder.Stream.ReadByte();
                     rangeDecoder.Range <<= 8;
                 }
@@ -115,6 +116,7 @@ namespace SevenZip.Compression.RangeCoder
                 Prob -= Prob >> kNumMoveBits;
                 if (rangeDecoder.Range < Decoder.kTopValue)
                 {
+                    ArgumentNullException.ThrowIfNull(rangeDecoder.Stream);
                     rangeDecoder.Code = (rangeDecoder.Code << 8) | (byte)rangeDecoder.Stream.ReadByte();
                     rangeDecoder.Range <<= 8;
                 }
