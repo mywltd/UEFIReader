@@ -5,6 +5,8 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <!-- 与 CI 中交叉发布的 RID 一致，便于 restore 生成 net8.0/<RID> 资产（避免 NETSDK1047） -->
+    <RuntimeIdentifiers>win-x64;win-arm64;linux-x64;linux-arm64;linux-musl-x64;osx-x64;osx-arm64</RuntimeIdentifiers>
   </PropertyGroup>
 
 </Project>
